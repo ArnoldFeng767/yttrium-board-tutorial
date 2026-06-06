@@ -1,2 +1,3 @@
-# yttrium-examples
-Yttrium 开发板 配套案例
+# yttrium-board-turorial
+Yttrium 开发板 配套教程
+
