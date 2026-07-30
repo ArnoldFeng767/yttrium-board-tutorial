@@ -3,6 +3,11 @@ import utime
 import _thread
 import lvgl as lv
 from app_base import AppPage
+try:
+    import voiceCall
+    HAS_VOICE = True
+except ImportError:
+    HAS_VOICE = False
 
 class PhonePage(AppPage):
     """电话拨号 -- 拨号/来电/通话/挂断。"""
@@ -123,7 +128,8 @@ class PhonePage(AppPage):
         self._state = "IDLE"
 
         # -- 注册通话回调 --
-        # voiceCall.setCallback(self._call_callback)
+        if HAS_VOICE:
+            voiceCall.setCallback(self._call_callback)
 
     # ---------- 按钮处理 ----------
 
@@ -140,25 +146,32 @@ class PhonePage(AppPage):
             self._phone_number = self._phone_number[:-1]
             self._num_label.set_text(self._phone_number)
 
-    # def _on_call(self):
-    #     if self._state == "IDLE":
-    #         if not self._phone_number:
-    #             return
-    #         voiceCall.callStart(self._phone_number)
-    #         self._state = "CALLING"
-    #         self._update_ui()
-    #     elif self._state == "INCOMING":
-    #         voiceCall.callAnswer()
-    #         self._state = "ACTIVE"
-    #         self._update_ui()
+    def _on_call(self):
+        if self._state == "IDLE":
+            if not self._phone_number:
+                return
+            print("[PHONE] call:", self._phone_number)
+            if HAS_VOICE:
+                voiceCall.callStart(self._phone_number)
+            self._state = "CALLING"
+            self._update_ui()
+        elif self._state == "INCOMING":
+            print("[PHONE] answer")
+            if HAS_VOICE:
+                voiceCall.callAnswer()
+            self._state = "ACTIVE"
+            self._update_ui()
 
-    # def _on_back_btn(self):
-    #     if self._state in ("CALLING", "ACTIVE", "INCOMING"):
-    #         voiceCall.callEnd()
-    #         self._state = "IDLE"
-    #         self._update_ui()
-    #     else:
-    #         self._on_back()
+    def _on_back_btn(self):
+        if self._state in ("CALLING", "ACTIVE", "INCOMING"):
+            print("[PHONE] hangup")
+            if HAS_VOICE:
+                voiceCall.callEnd()
+            self._state = "IDLE"
+            self._phone_number = ""
+            self._update_ui()
+        else:
+            self._on_back()
 
     # ---------- 通话回调 ----------
 

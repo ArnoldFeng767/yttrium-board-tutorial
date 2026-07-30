@@ -5,6 +5,11 @@ import _thread
 import lvgl as lv
 from machine import LCD, Pin
 from tp import ft6x36 as Ft6x36
+try:
+    import net
+    HAS_NET = True
+except ImportError:
+    HAS_NET = False
 
 # 确保 /usr/ 在模块搜索路径中（QuecPython 导入其他 .py 文件所需）
 sys.path.insert(0, "/usr")
@@ -147,6 +152,13 @@ class MainScreen:
         self._time_label.set_pos((self._sw - 60) // 2, 3)
         _thread.start_new_thread(self._time_tick, ())
 
+        # 信号强度图标（lv.timer 在主线程轮询，不卡 UI）
+        self._sig_icon = lv.img(bar)
+        self._sig_icon.set_src("U:/icons/sig_0.png")
+        self._sig_icon.set_pos(self._sw - 84, 5)
+        if HAS_NET:
+            self._sig_timer = lv.timer_create(self._sig_tick, 5000, None)
+
         ic_wifi = lv.img(bar)
         ic_wifi.set_src("U:/icons/wifi.png")
         ic_wifi.set_pos(self._sw - 38, 3)
@@ -226,6 +238,18 @@ class MainScreen:
                     "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5]))
             except Exception:
                 pass
+
+    def _sig_tick(self, timer):
+        """lv.timer 回调（主线程）：每 5 秒刷新信号图标。"""
+        try:
+            csq = net.csqQueryPoll()
+            if csq >= 0 and csq <= 31:
+                level = min(4, max(0, csq * 5 // 32))
+                self._sig_icon.set_src("U:/icons/sig_{}.png".format(level))
+            else:
+                self._sig_icon.set_src("U:/icons/sig_0.png")
+        except Exception:
+            self._sig_icon.set_src("U:/icons/sig_0.png")
 
     def set_time(self, text):
         self._time_label.set_text(text)
