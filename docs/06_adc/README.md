@@ -101,7 +101,7 @@ ADC0 测试点在板上有引出（参考 `datasheet/` 原理图 Sheet 7）。EG
 
 ## 代码位置
 
-[src/yttrium.py](../../src/yttrium.py) → `class AdcPage(AppPage)`（第 429 行起）
+[src/adc.py](../../src/adc.py) → `class AdcPage(AppPage)`
 
 ## 涉及模块
 
